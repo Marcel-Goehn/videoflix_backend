@@ -12,14 +12,18 @@ from .serializers import RegistrationSerializer
 
 
 class RegistrationAPIView(APIView):
-
+    """
+    View for registering user. The return statement has no usage for the frontend.
+    It is only useful for seeing the status.
+    Make sure to also check out the signals.py method. 
+    There will be a email send out to the user, for activating his account.
+    """
     permission_classes = [AllowAny]
 
     def post(self, req):
         serializer = RegistrationSerializer(data=req.data)
         if serializer.is_valid(raise_exception=True):
             data = serializer.save()
-            print(data)
             return Response({
                 "user": {
                     "id": data.pk,
