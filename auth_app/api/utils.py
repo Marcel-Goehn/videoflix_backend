@@ -1,22 +1,11 @@
-import base64
+import six
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 
-# Encodes the id
-def encode_id(id):
-    string_id = str(id)
-    string_id_bytes = string_id.encode("ascii")
+class AccountActivationTokenGenerator(PasswordResetTokenGenerator):
+    def _make_hash_value(self, user, timestamp):
+        return(
+            six.text_type(user.pk) + six.text_type(timestamp) + six.text_type(user.is_active)
+        )
 
-    base64_bytes = base64.b64encode(string_id_bytes)
-    base64_string = base64_bytes.decode("ascii")
-    return base64_string
-
-
-# Decodes the id
-def decode_id(id):
-    base64_string = str(id)
-    base64_bytes = base64_string.encode("ascii")
-
-    id_string_bytes = base64.b64decode(base64_bytes)
-    id_string = id_string_bytes.decode("ascii")
-    id_int = int(id_string)
-    return id_int
+account_activation_token = AccountActivationTokenGenerator()

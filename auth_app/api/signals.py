@@ -4,12 +4,14 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+
+from dotenv import load_dotenv
 
 import django_rq
 
-from .utils import encode_id
-
-from dotenv import load_dotenv
+from .utils import account_activation_token
 
 load_dotenv()
 
@@ -27,7 +29,7 @@ def user_post_save(sender, instance, created, **kwargs):
                       f"""Dear {instance.email},
                       Thank you for registering with Videoflix. To complete your registration and verify your email address, please click the link below:
 
-                      http://127.0.0.1:8000/api/activate/{encode_id(instance.pk)}/token/
+                      http://127.0.0.1:8000/api/activate/{urlsafe_base64_encode(force_bytes(instance.pk))}/{account_activation_token.make_token(instance)}/
 
                       If you did not create an account with us, please disregard this email.
 
