@@ -45,6 +45,10 @@ class RegistrationSerializer(serializers.ModelSerializer):
     
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    Login serializer. Validates the request send with email and password.
+    If the request is valid, the view will return a set of JWT tokens.
+    """
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
@@ -68,3 +72,31 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         
         data = super().validate({"username": user.username, "password": password})
         return data
+    
+
+class PasswordResetSerializer(serializers.ModelSerializer):
+    """
+    Used to validate the entered email. If not found, a validation error will be raised.
+    """
+    class Meta:
+        model = User
+        fields = ["email"]
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email does not exist.")
+        return value
+    
+
+class NewPasswordSerializer(serializers.Serializer):
+    """
+    Validates the equality of the two entered passwords.
+    If not equal, a validation error will be raised.
+    """
+    new_password = serializers.CharField()
+    confirm_password = serializers.CharField()
+
+    def validate(self, attrs):
+        if attrs["new_password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError({"password": "Passwords do not match!"})
+        return attrs

@@ -11,8 +11,9 @@ from rest_framework_simplejwt.views import (TokenObtainPairView,
                                             TokenRefreshView)
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import RegistrationSerializer, CustomTokenObtainPairSerializer
-from .utils import account_activation_token
+from .serializers import (RegistrationSerializer, CustomTokenObtainPairSerializer,
+                          PasswordResetSerializer, NewPasswordSerializer)
+from .utils import account_activation_token, send_password_reset_mail
 from .permissions import HasRefreshToken
 
 
@@ -180,5 +181,66 @@ class RefreshView(TokenRefreshView):
             samesite="Lax"
         )
         return response
+
+
+class PasswordResetView(APIView):
+    """
+    This view sends out an email to reset the users password
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, req):
+        """
+        Calls the send_password_reset_mail() function. It is sending out an email with DjangoRQ,
+        so that the users has not to wait until the mail is send.
+        """
+        serializer = PasswordResetSerializer(data=req.data)
+        if serializer.is_valid(raise_exception=True):
+            data = serializer.data
+            user = User.objects.get(email=data["email"])
+            send_password_reset_mail(user)
+            return Response({"detail": "An email has been sent to reset your password."})
+        return Response(serializer.errors)
+    
+
+class NewPasswordView(APIView):
+    """
+    Updates the users password after receiving a reset link via email.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, req, uidb64, token):
+        """
+        Retrieves the user id wich is encoded in base64.
+        Also retrieves a token to verify the request.
+        This view decodes the token and user id. If bot are valid,
+        the newly entered password will be hashed and saved to the database.
+        """
+        serializer = NewPasswordSerializer(data=req.data)
+        if serializer.is_valid(raise_exception=True):
+            data = serializer.data
+            new_password = data["new_password"]
+            try:
+                uid = force_str(urlsafe_base64_decode(uidb64))
+                user = User.objects.get(pk=uid)
+            except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+                user = None
+            if user is not None and account_activation_token.check_token(user, token):
+                user.set_password(new_password)
+                user.save()
+                return Response(
+                    {"detail": "Your Password has been successfully reset."},
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {"detail": "Your reset token expired. Please request a new reset mail."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
