@@ -133,3 +133,52 @@ class LogoutView(APIView):
         response.delete_cookie(key="refresh_token")
         return response
 
+
+class RefreshView(TokenRefreshView):
+    """
+    With the help of this view are users able, to refresh their access token without
+    the need to login again.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        """
+        If the access token has expired, the user can claim another one.
+        With the help of this view, it makes use of the refresh token. 
+        If it is valid, the view will return a new access token via the response cookie.
+        """
+        refresh_token = request.COOKIES.get("refresh_token")
+
+        if refresh_token is None:
+            return Response(
+                {"detail": "Refresh token not found"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = self.get_serializer(data={"refresh": refresh_token})
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except:
+            return Response(
+                {"detail": "Refresh token invalid"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        access_token = serializer.validated_data.get("access")
+        response = Response(
+            {
+                "detail": "Token refreshed",
+                "access": "new_access_token"
+            }
+        )
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=True,
+            samesite="Lax"
+        )
+        return response
+
+
