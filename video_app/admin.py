@@ -1,6 +1,12 @@
 from django.contrib import admin
 from .models import Video
 
-# Register your models here.
 
-admin.site.register(Video)
+@admin.register(Video)
+class VideoAdmin(admin.ModelAdmin):
+    readonly_fields = ('thumbnail_url',)
+
+    def get_exclude(self, request, obj=None):
+        if obj is None:
+            return ('thumbnail_url',)
+        return ()
