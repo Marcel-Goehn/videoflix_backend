@@ -22,7 +22,6 @@ def user_post_save(sender, instance, created, **kwargs):
     Sends an activation email after a user has successfully created an account.
     """
     if created:
-        print(instance)
         queue = django_rq.get_queue("default", autocommit=True)
         queue.enqueue(send_mail,
                       "Confirm your email",

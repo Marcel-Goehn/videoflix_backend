@@ -5,7 +5,7 @@ from django.utils.encoding import force_str
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 
 from rest_framework_simplejwt.views import (TokenObtainPairView, 
                                             TokenRefreshView)
@@ -14,7 +14,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (RegistrationSerializer, CustomTokenObtainPairSerializer,
                           PasswordResetSerializer, NewPasswordSerializer)
 from .utils import account_activation_token, send_password_reset_mail
-from .permissions import HasRefreshToken
 
 
 class RegistrationAPIView(APIView):
@@ -111,20 +110,38 @@ class LoginView(TokenObtainPairView):
         return response
     
 
-class LogoutView(APIView):
+class LogoutView(TokenRefreshView):
     """
     This view is for logging a user out.
     """
-    permission_classes = [IsAuthenticated, HasRefreshToken]
+    permission_classes = [AllowAny]
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         """
         Deletes the access and refresh token from the response cookie.
         Sets the refresh token on a blacklist, so it can't be reused.
         User has to re enter his initials if he wants to continue.
         """
-        refresh_token = RefreshToken(request.COOKIES.get("refresh_token"))
-        refresh_token.blacklist()
+        refresh_token = request.COOKIES.get("refresh_token")
+
+        if refresh_token is None:
+            return Response(
+                {"detail": "Refresh token not found"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        serializer = self.get_serializer(data={"refresh": refresh_token})
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except:
+            return Response(
+                {"detail": "Refresh token invalid"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        refresh_token_blacklist = RefreshToken(refresh_token)
+        refresh_token_blacklist.blacklist()
         response = Response(
             {
                 "detail": "Log-Out successfully! All Tokens will be deleted. Refresh token is now invalid."
