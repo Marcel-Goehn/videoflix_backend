@@ -35,6 +35,18 @@ A REST API backend for a Netflix-like video streaming platform, built with **Dja
 
 ---
 
+## API Documentation
+
+Interactive API docs are available when the server is running:
+
+| Interface | URL |
+|---|---|
+| Swagger UI | `http://localhost:8000/api/schema/swagger-ui/` |
+| ReDoc | `http://localhost:8000/api/schema/redoc/` |
+| OpenAPI schema (JSON) | `http://localhost:8000/api/schema/` |
+
+---
+
 ## Prerequisites
 
 - **Docker** & **Docker Compose** (recommended)
@@ -69,6 +81,8 @@ For local development without Docker:
 4. **Access the application**
    - API: `http://localhost:8000/api/`
    - Admin dashboard: `http://localhost:8000/admin/`
+   - Swagger UI: `http://localhost:8000/api/schema/swagger-ui/`
+   - ReDoc: `http://localhost:8000/api/schema/redoc/`
 
 ---
 
