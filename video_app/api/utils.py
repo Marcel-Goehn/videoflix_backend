@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 
 from django.conf import settings
@@ -6,26 +7,27 @@ from django.conf import settings
 from video_app.models import Video
 
 
-def convert_video(source, quality):
+def convert_video(source, quality, video_pk):
     """
-    Converts the uploaded video to the desired quality
-    with the help of ffmpeg
+    Converts the uploaded video to HLS format at the desired quality.
     """
-    base = os.path.splitext(source)[0]
-    new_file_name = f'{base}_{quality}p.mp4'
-    cmd = 'ffmpeg -i "{}" -vf scale=-2:{} -c:v libx264 -crf 23 -c:a aac -strict -2 "{}"'.format(source, quality, new_file_name)
+    output_dir = os.path.join(settings.MEDIA_ROOT, 'hls', str(video_pk), f'{quality}p')
+    os.makedirs(output_dir, exist_ok=True)
+    manifest = os.path.join(output_dir, 'index.m3u8')
+    cmd = (
+        'ffmpeg -i "{}" -vf scale=-2:{} -c:v libx264 -crf 23 -c:a aac -strict -2 '
+        '-start_number 0 -hls_time 10 -hls_list_size 0 -f hls "{}"'
+    ).format(source, quality, manifest)
     subprocess.run(cmd, shell=True, capture_output=True)
 
 
-def delete_converted_videos(source, quality):
+def delete_hls_video(video_pk):
     """
-    Deletes all video files, after the user deletes it via
-    the admin dashboard
+    Deletes the HLS directory for a video after it is removed via the admin dashboard.
     """
-    base = os.path.splitext(source)[0]
-    file_path = f'{base}_{quality}p.mp4'
-    if os.path.exists(file_path):
-        os.remove(file_path)
+    hls_dir = os.path.join(settings.MEDIA_ROOT, 'hls', str(video_pk))
+    if os.path.exists(hls_dir):
+        shutil.rmtree(hls_dir)
 
 
 def generate_thumbnail(source, instance_pk):
