@@ -123,13 +123,13 @@ Copy `.env.template` to `.env` and set the following values:
 
 ## Related Frontend
 
-[VideoFlix Frontend](<LINK>)
+[VideoFlix Frontend](https://github.com/Developer-Akademie-Backendkurs/project.Videoflix)
 
 ---
 
 ## Author
 
-[<NAME>](<GITHUB_LINK>)
+[Marcel Goehn](https://github.com/Marcel-Goehn)
 
 ---
 
@@ -141,4 +141,4 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Feedback
 
-For questions or feedback, reach out at: `<EMAIL_ADDRESS>`
+For questions or feedback, reach out at: marcelgoehn@googlemail.com
