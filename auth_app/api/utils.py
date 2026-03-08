@@ -37,7 +37,7 @@ def send_password_reset_mail(user):
 
                    We recently received a request to reset your password. If you made this request, please click on the following link to reset your password:
 
-                   http://127.0.0.1:8000/api/password_confirm/{urlsafe_base64_encode(force_bytes(user.pk))}/{account_activation_token.make_token(user)}/
+                   http://127.0.0.1:5500/pages/auth/confirm_password.html?uid={urlsafe_base64_encode(force_bytes(user.pk))}&token={account_activation_token.make_token(user)}
 
                    Please note that, for security reasons, this link is only valid for 24 hours.
 

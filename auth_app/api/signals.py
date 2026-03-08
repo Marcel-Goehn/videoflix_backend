@@ -28,7 +28,7 @@ def user_post_save(sender, instance, created, **kwargs):
                       f"""Dear {instance.email},
                       Thank you for registering with Videoflix. To complete your registration and verify your email address, please click the link below:
 
-                      http://127.0.0.1:8000/api/activate/{urlsafe_base64_encode(force_bytes(instance.pk))}/{account_activation_token.make_token(instance)}/
+                      http://127.0.0.1:5500/pages/auth/activate.html?uid={urlsafe_base64_encode(force_bytes(instance.pk))}&token={account_activation_token.make_token(instance)}
 
                       If you did not create an account with us, please disregard this email.
 
