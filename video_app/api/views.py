@@ -40,3 +40,24 @@ class HLSManifestView(APIView):
         with open(manifest_path, 'r') as f:
             content = f.read()
         return HttpResponse(content, content_type='application/vnd.apple.mpegurl')
+
+
+class HLSSegmentView(APIView):
+    """
+    Returns a single HLS video segment for a specific movie in the chosen resolution.
+    """
+    def get(self, request, movie_id, resolution, segment):
+        if not Video.objects.filter(pk=movie_id).exists():
+            return Response(
+                {"Error": "Video not found"},
+                status=status.HTTP_404_NOT_FOUND)
+        segment_path = os.path.join(
+            settings.MEDIA_ROOT, 'hls', str(movie_id), resolution, segment
+        )
+        if not os.path.exists(segment_path):
+            return Response(
+                {"Error": "Video or segment not found"},
+                status=status.HTTP_404_NOT_FOUND)
+        with open(segment_path, 'rb') as f:
+            content = f.read()
+        return HttpResponse(content, content_type='video/MP2T')
