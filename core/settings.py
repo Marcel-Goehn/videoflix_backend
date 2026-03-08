@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_rq',
     'auth_app.apps.AuthAppConfig',
-    'video_app.apps.VideoConfig'
+    'video_app.apps.VideoConfig',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -162,7 +163,28 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ]
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'VideoFlix API',
+    'DESCRIPTION': (
+        'REST API for the VideoFlix streaming platform. '
+        'Authentication uses JWT tokens stored in HTTP-only cookies.'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SECURITY': [{'cookieAuth': []}],
+    'COMPONENTS': {
+        'securitySchemes': {
+            'cookieAuth': {
+                'type': 'apiKey',
+                'in': 'cookie',
+                'name': 'access_token',
+            }
+        }
+    },
 }
 
 

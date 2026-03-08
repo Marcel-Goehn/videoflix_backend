@@ -7,20 +7,51 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 
-from rest_framework_simplejwt.views import (TokenObtainPairView, 
+from rest_framework_simplejwt.views import (TokenObtainPairView,
                                             TokenRefreshView)
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, inline_serializer
+from rest_framework import serializers
 
 from .serializers import (RegistrationSerializer, CustomTokenObtainPairSerializer,
                           PasswordResetSerializer, NewPasswordSerializer)
 from .utils import account_activation_token, send_password_reset_mail
 
 
+@extend_schema(
+    request=inline_serializer(
+        name='RegistrationRequest',
+        fields={
+            'email': serializers.EmailField(),
+            'password': serializers.CharField(),
+            'confirmed_password': serializers.CharField(),
+        }
+    ),
+    responses={
+        201: inline_serializer(
+            name='RegistrationResponse',
+            fields={
+                'user': inline_serializer(
+                    name='RegistrationUserData',
+                    fields={
+                        'id': serializers.IntegerField(),
+                        'email': serializers.EmailField(),
+                    }
+                ),
+                'token': serializers.CharField(),
+            }
+        ),
+        400: OpenApiResponse(description='Validation error'),
+    },
+    summary='Register a new user',
+    tags=['Auth'],
+)
 class RegistrationAPIView(APIView):
     """
     View for registering user. The return statement has no usage for the frontend.
     It is only useful for seeing the status.
-    Make sure to also check out the signals.py method. 
+    Make sure to also check out the signals.py method.
     There will be a email send out to the user, for activating his account.
     """
     permission_classes = [AllowAny]
@@ -39,10 +70,22 @@ class RegistrationAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(
+    parameters=[
+        OpenApiParameter('uidb64', str, OpenApiParameter.PATH, description='Base64-encoded user ID'),
+        OpenApiParameter('token', str, OpenApiParameter.PATH, description='Account activation token'),
+    ],
+    responses={
+        200: OpenApiResponse(description='Account successfully activated'),
+        400: OpenApiResponse(description='Invalid or expired activation link'),
+    },
+    summary='Activate account via email link',
+    tags=['Auth'],
+)
 class AccountActivationView(APIView):
     """
-    This view is for activating the user account. 
-    When the user registers a neww account, it is not active by default.
+    This view is for activating the user account.
+    When the user registers a new account, it is not active by default.
     The user has to go into his email account, and click on the activation link.
     This link will trigger this view.
     """
@@ -73,6 +116,15 @@ class AccountActivationView(APIView):
             )
         
 
+@extend_schema(
+    request=CustomTokenObtainPairSerializer,
+    responses={
+        200: OpenApiResponse(description='Sets access_token and refresh_token cookies'),
+        400: OpenApiResponse(description='Invalid Email or password')
+    },
+    summary='Login and receive JWT cookies',
+    tags=['Auth'],
+)
 class LoginView(TokenObtainPairView):
     """
     This view is for logging in a user.
@@ -110,6 +162,16 @@ class LoginView(TokenObtainPairView):
         return response
     
 
+@extend_schema(
+    request=None,
+    responses={
+        200: OpenApiResponse(description='Clears JWT cookies and blacklists refresh token'),
+        400: OpenApiResponse(description='Refresh token not found in cookies')
+    },
+    summary='Logout and invalidate tokens',
+    description='Requires a valid `access_token` and `refresh_token` cookie. No request body needed.',
+    tags=['Auth'],
+)
 class LogoutView(TokenRefreshView):
     """
     This view is for logging a user out.
@@ -152,6 +214,16 @@ class LogoutView(TokenRefreshView):
         return response
 
 
+@extend_schema(
+    request=None,
+    responses={
+        200: OpenApiResponse(description='Issues new access_token cookie'),
+        400: OpenApiResponse(description='Refresh token is missing'),
+        401: OpenApiResponse(description='Invalid refresh token')
+    },
+    summary='Refresh access token via cookie',
+    tags=['Auth'],
+)
 class RefreshView(TokenRefreshView):
     """
     With the help of this view are users able, to refresh their access token without
@@ -200,6 +272,15 @@ class RefreshView(TokenRefreshView):
         return response
 
 
+@extend_schema(
+    request=PasswordResetSerializer,
+    responses={
+        200: OpenApiResponse(description='Password reset email sent'),
+        404: OpenApiResponse(description='User with that email not found'),
+    },
+    summary='Request password reset email',
+    tags=['Auth'],
+)
 class PasswordResetView(APIView):
     """
     This view sends out an email to reset the users password
@@ -220,6 +301,19 @@ class PasswordResetView(APIView):
         return Response(serializer.errors)
     
 
+@extend_schema(
+    request=NewPasswordSerializer,
+    parameters=[
+        OpenApiParameter('uidb64', str, OpenApiParameter.PATH, description='Base64-encoded user ID'),
+        OpenApiParameter('token', str, OpenApiParameter.PATH, description='Password reset token'),
+    ],
+    responses={
+        200: OpenApiResponse(description='Password successfully reset'),
+        400: OpenApiResponse(description='Invalid or expired reset token / Passwords do not match')
+    },
+    summary='Set new password via reset link',
+    tags=['Auth'],
+)
 class NewPasswordView(APIView):
     """
     Updates the users password after receiving a reset link via email.
