@@ -7,7 +7,7 @@ class Video(models.Model):
     description = models.TextField()
     thumbnail_url = models.URLField()
     category = models.CharField(max_length=100)
-    video_file = models.FileField(blank=True)
+    video_file = models.FileField()
 
     def __str__(self):
         return self.title
