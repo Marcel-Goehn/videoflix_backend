@@ -4,7 +4,7 @@ from django.utils.encoding import force_str
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.permissions import AllowAny
 
 from rest_framework_simplejwt.views import (TokenObtainPairView,
@@ -12,7 +12,6 @@ from rest_framework_simplejwt.views import (TokenObtainPairView,
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, inline_serializer
-from rest_framework import serializers
 
 from .serializers import (RegistrationSerializer, CustomTokenObtainPairSerializer,
                           PasswordResetSerializer, NewPasswordSerializer)

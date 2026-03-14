@@ -8,7 +8,6 @@ class CookieJWTAuthentication(JWTAuthentication):
     are http only cookies used to authenticate. The standard drf JWT authentication class 
     only works with request headers, not cookies.
     """
-
     def authenticate(self, request):
         token = request.COOKIES.get("access_token")
         if not token:
