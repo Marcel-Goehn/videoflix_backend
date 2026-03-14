@@ -27,7 +27,7 @@ A REST API backend for a Netflix-like video streaming platform, built with **Dja
 - Token refresh & logout with token blacklisting
 - Password reset via email
 - Video upload via the Django admin dashboard
-- FFmpeg transcoding to HLS format (360p, 480p, 720p, 1080p)
+- FFmpeg transcoding to HLS format (480p, 720p, 1080p)
 - Automatic thumbnail generation on upload
 - Non-blocking background video processing via Django RQ
 - RESTful API for listing videos and streaming HLS content
@@ -63,7 +63,7 @@ For local development without Docker:
 
 1. **Clone the repository**
    ```bash
-   git clone <REPOSITORY_URL>
+   git clone git@github.com:Marcel-Goehn/videoflix_backend.git
    cd videoflix-backend
    ```
 
