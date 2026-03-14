@@ -49,13 +49,7 @@ Interactive API docs are available when the server is running:
 
 ## Prerequisites
 
-- **Docker** & **Docker Compose** (recommended)
-
-For local development without Docker:
-- Python 3.12+
-- PostgreSQL
-- Redis
-- FFmpeg (must be available on your `PATH`)
+- **Docker**
 
 ---
 
@@ -64,7 +58,7 @@ For local development without Docker:
 1. **Clone the repository**
    ```bash
    git clone git@github.com:Marcel-Goehn/videoflix_backend.git
-   cd videoflix-backend
+   cd videoflix_backend
    ```
 
 2. **Configure environment variables**
@@ -140,7 +134,7 @@ Copy `.env.template` to `.env` and set the following values:
 
 ## Related Frontend
 
-[VideoFlix Frontend](https://github.com/Developer-Akademie-Backendkurs/project.Videoflix)
+[VideoFlix Frontend](https://github.com/Marcel-Goehn/videoflix_frontend)
 
 ---
 

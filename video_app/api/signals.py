@@ -20,7 +20,6 @@ def video_post_save(sender, instance, created, **kwargs):
     """
     if created:
         queue = django_rq.get_queue("default", autocommit=True)
-        queue.enqueue(convert_video, instance.video_file.path, 360, instance.pk)
         queue.enqueue(convert_video, instance.video_file.path, 480, instance.pk)
         queue.enqueue(convert_video, instance.video_file.path, 720, instance.pk)
         queue.enqueue(convert_video, instance.video_file.path, 1080, instance.pk)
