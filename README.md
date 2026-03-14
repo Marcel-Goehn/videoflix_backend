@@ -84,8 +84,8 @@ For local development without Docker:
    - Swagger UI: `http://localhost:8000/api/schema/swagger-ui/`
    - ReDoc: `http://localhost:8000/api/schema/redoc/`
 
-5. **Trouleshoot**
-   -exec ./backend.entrypoint.sh: no such file or directory: Change in IDE from CRLF to LF (End of Line Sequence)
+5. **Troubleshoot**
+   - exec ./backend.entrypoint.sh: no such file or directory: Change in IDE from CRLF to LF (End of Line Sequence)
 
 ---
 
