@@ -2,14 +2,14 @@ import os
 import six
 
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.core.mail import get_connection
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.utils.html import strip_tags
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 
 from email.mime.image import MIMEImage
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 import django_rq
 
@@ -23,10 +23,13 @@ class AccountActivationTokenGenerator(PasswordResetTokenGenerator):
     """
     Creates a unique token to verify email requests.
     """
+
     def _make_hash_value(self, user, timestamp):
-        return(
-            six.text_type(user.pk) + six.text_type(timestamp) + six.text_type(user.is_active)
+        return (
+            six.text_type(user.pk) + six.text_type(timestamp) +
+            six.text_type(user.is_active)
         )
+
 
 account_activation_token = AccountActivationTokenGenerator()
 
@@ -35,44 +38,32 @@ def send_activation_email(to_email, username, activation_url):
     """
     Sends an email after registration to activate the user
     """
-    logo_path = os.path.normpath(
-        os.path.join(os.path.dirname(__file__), '..', 'static', 'auth_app', 'images', 'Logo.png')
-    )
+    subject = "Confirm your email"
     context = {
         "username": username,
         "activation_url": activation_url,
-        "logo_url": "cid:logo_image",
     }
     html_message = render_to_string("auth_app/activation_email.html", context)
-    plain_message = (
-        f"Dear {username},\n\n"
-        "Thank you for registering with Videoflix. To activate your account visit:\n"
-        f"{activation_url}\n\n"
-        "If you did not create an account, please disregard this email.\n\n"
-        "Best regards,\nYour Videoflix Team."
+    plain_message = strip_tags(html_message)
+    from_email = os.getenv("EMAIL_HOST_USER")
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=plain_message,
+        from_email=from_email,
+        to=[to_email],
     )
-    from_email = os.environ.get("EMAIL_HOST_USER")
+    email.attach_alternative(html_message, "text/html")
 
-    msg = MIMEMultipart('related')
-    msg['Subject'] = "Confirm your email"
-    msg['From'] = from_email
-    msg['To'] = to_email
+    img_path = os.path.join(settings.BASE_DIR, "auth_app",
+                            "static", "auth_app", "images", "Logo.png")
+    with open(img_path, "rb") as f:
+        img = MIMEImage(f.read())
+        img.add_header("Content-ID", "<logo>")
+        img.add_header("Content-Disposition", "inline", filename="Logo.png")
+        email.attach(img)
 
-    msg_alt = MIMEMultipart('alternative')
-    msg_alt.attach(MIMEText(plain_message, 'plain', 'utf-8'))
-    msg_alt.attach(MIMEText(html_message, 'html', 'utf-8'))
-    msg.attach(msg_alt)
-
-    with open(logo_path, 'rb') as f:
-        logo = MIMEImage(f.read())
-    logo.add_header('Content-ID', '<logo_image>')
-    logo.add_header('Content-Disposition', 'inline', filename='Logo.png')
-    msg.attach(logo)
-
-    connection = get_connection(fail_silently=False)
-    connection.open()
-    connection.connection.sendmail(from_email, [to_email], msg.as_bytes())
-    connection.close()
+    email.send()
 
 
 def do_send_password_reset(to_email, reset_url):
@@ -80,45 +71,31 @@ def do_send_password_reset(to_email, reset_url):
     Sends an email to verify that the password reset request is really coming
     from the actual user
     """
-    logo_path = os.path.normpath(
-        os.path.join(os.path.dirname(__file__), '..', 'static', 'auth_app', 'images', 'Logo.png')
-    )
+    subject = "Reset your Password"
     context = {
-        "reset_url": reset_url,
-        "logo_url": "cid:logo_image",
+        "reset_url": reset_url
     }
     html_message = render_to_string("auth_app/password_reset_email.html", context)
-    plain_message = (
-        "Hello,\n\n"
-        "We recently received a request to reset your password. "
-        "If you made this request, please visit:\n"
-        f"{reset_url}\n\n"
-        "Please note that for security reasons, this link is only valid for 24 hours.\n\n"
-        "If you did not request a password reset, please ignore this email.\n\n"
-        "Best regards,\nYour Videoflix team!"
+    plain_message = strip_tags(html_message)
+    from_email = os.getenv("EMAIL_HOST_USER")
+    
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=plain_message,
+        from_email=from_email,
+        to=[to_email],
     )
-    from_email = os.environ.get("EMAIL_HOST_USER")
+    email.attach_alternative(html_message, "text/html")
+    
+    img_path = os.path.join(settings.BASE_DIR, "auth_app",
+                            "static", "auth_app", "images", "Logo.png")
+    with open(img_path, "rb") as f:
+        img = MIMEImage(f.read())
+        img.add_header("Content-ID", "<logo>")
+        img.add_header("Content-Disposition", "inline", filename="Logo.png")
+        email.attach(img)
 
-    msg = MIMEMultipart('related')
-    msg['Subject'] = "Reset your Password"
-    msg['From'] = from_email
-    msg['To'] = to_email
-
-    msg_alt = MIMEMultipart('alternative')
-    msg_alt.attach(MIMEText(plain_message, 'plain', 'utf-8'))
-    msg_alt.attach(MIMEText(html_message, 'html', 'utf-8'))
-    msg.attach(msg_alt)
-
-    with open(logo_path, 'rb') as f:
-        logo = MIMEImage(f.read())
-    logo.add_header('Content-ID', '<logo_image>')
-    logo.add_header('Content-Disposition', 'inline', filename='Logo.png')
-    msg.attach(logo)
-
-    connection = get_connection(fail_silently=False)
-    connection.open()
-    connection.connection.sendmail(from_email, [to_email], msg.as_bytes())
-    connection.close()
+    email.send()
 
 
 def send_password_reset_mail(user):

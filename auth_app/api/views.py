@@ -138,27 +138,28 @@ class LoginView(TokenObtainPairView):
         return the access and refresh token as HTTP Cookies.
         """
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        refresh = serializer.validated_data["refresh"]
-        access = serializer.validated_data["access"]
-        response = Response({"message": "Login erfolgreich"})
+        if serializer.is_valid():
+            refresh = serializer.validated_data["refresh"]
+            access = serializer.validated_data["access"]
+            response = Response({"message": "Login erfolgreich"})
 
-        response.set_cookie(
-            key="access_token",
-            value=access,
-            httponly=True,
-            secure=True,
-            samesite="Lax"
-        )
+            response.set_cookie(
+                key="access_token",
+                value=access,
+                httponly=True,
+                secure=True,
+                samesite="Lax"
+            )
 
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh,
-            httponly=True,
-            secure=True,
-            samesite="Lax"
-        )
-        return response
+            response.set_cookie(
+                key="refresh_token",
+                value=refresh,
+                httponly=True,
+                secure=True,
+                samesite="Lax"
+            )
+            return response
+        return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
     
 
 @extend_schema(
